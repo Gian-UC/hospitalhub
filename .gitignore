@@ -1,0 +1,20 @@
+# .NET
+bin/
+obj/
+
+# Visual Studio / VSCode
+.vscode/
+.idea/
+
+# Docker
+**/docker-data/
+docker/*.log
+
+# Sistema
+*.DS_Store
+*.user
+*.opendb
+*.sqlite
+
+# Logs
+*.log

@@ -1,0 +1,56 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "clinica-service", "clinica-service", "{AE130BCF-3702-93D2-A2FC-9699A43A5D41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cirurgico-service", "cirurgico-service", "{F064B941-8F5D-0FD7-5E45-FA8CD96DCBD2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "agendamentos-service", "agendamentos-service", "{FE6823E7-9D26-9FBC-3E75-F2AE8F77EEBB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gateway", "gateway", "{E7BDDBC6-9FD1-D1D7-ACD8-2C4F8E3D2461}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clinica.Api", "clinica-service\Clinica.Api\Clinica.Api.csproj", "{A8C6F103-30AF-FF9E-9F77-036401543E66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirurgico.Api", "cirurgico-service\Cirurgico.Api\Cirurgico.Api.csproj", "{4255F7E2-8A13-183D-3D59-54042DFE2968}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agendamentos.Api", "agendamentos-service\Agendamentos.Api\Agendamentos.Api.csproj", "{D0AD56D4-57A9-30F5-38AF-C123058E76A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HospitalGateway", "gateway\HospitalGateway\HospitalGateway.csproj", "{D5DF9518-0129-0B11-693A-4AE283754088}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8C6F103-30AF-FF9E-9F77-036401543E66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8C6F103-30AF-FF9E-9F77-036401543E66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8C6F103-30AF-FF9E-9F77-036401543E66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8C6F103-30AF-FF9E-9F77-036401543E66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4255F7E2-8A13-183D-3D59-54042DFE2968}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4255F7E2-8A13-183D-3D59-54042DFE2968}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4255F7E2-8A13-183D-3D59-54042DFE2968}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4255F7E2-8A13-183D-3D59-54042DFE2968}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0AD56D4-57A9-30F5-38AF-C123058E76A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0AD56D4-57A9-30F5-38AF-C123058E76A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0AD56D4-57A9-30F5-38AF-C123058E76A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0AD56D4-57A9-30F5-38AF-C123058E76A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5DF9518-0129-0B11-693A-4AE283754088}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5DF9518-0129-0B11-693A-4AE283754088}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5DF9518-0129-0B11-693A-4AE283754088}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5DF9518-0129-0B11-693A-4AE283754088}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A8C6F103-30AF-FF9E-9F77-036401543E66} = {AE130BCF-3702-93D2-A2FC-9699A43A5D41}
+		{4255F7E2-8A13-183D-3D59-54042DFE2968} = {F064B941-8F5D-0FD7-5E45-FA8CD96DCBD2}
+		{D0AD56D4-57A9-30F5-38AF-C123058E76A1} = {FE6823E7-9D26-9FBC-3E75-F2AE8F77EEBB}
+		{D5DF9518-0129-0B11-693A-4AE283754088} = {E7BDDBC6-9FD1-D1D7-ACD8-2C4F8E3D2461}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5E66A482-0591-4488-B00C-FC519AE652E5}
+	EndGlobalSection
+EndGlobal
