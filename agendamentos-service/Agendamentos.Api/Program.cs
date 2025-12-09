@@ -1,41 +1,61 @@
+using Agendamentos.Api.Domain.Context;
+using Agendamentos.Api.Services.Implementations;
+using Agendamentos.Api.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddDbContext<HospitalAgendamentosContext>(options =>
+{
+    var cs = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    options.UseMySql(
+        cs,
+        new MySqlServerVersion(new Version(8, 0, 44)),
+        mySqlOptions =>
+        {
+            mySqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(5), null);
+        }
+    );
+});
+
+builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.Lifetime.ApplicationStarted.Register(() =>
 {
-    app.MapOpenApi();
-}
+    Task.Run(async () =>
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<HospitalAgendamentosContext>();
 
-app.UseHttpsRedirection();
+        var retries = 10;
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+        while (retries > 0)
+        {
+            try
+            {
+                await db.Database.MigrateAsync();
+                break;
+            }
+            catch
+            {
+                retries--;
+                await Task.Delay(5000);
+            }
+        }
+    });
+});
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
