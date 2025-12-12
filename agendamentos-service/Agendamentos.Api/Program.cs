@@ -1,4 +1,5 @@
 using Agendamentos.Api.Domain.Context;
+using Agendamentos.Api.Messaging.Producer;
 using Agendamentos.Api.Services.Implementations;
 using Agendamentos.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,8 @@ builder.Services.AddDbContext<HospitalAgendamentosContext>(options =>
 });
 
 builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
+
+builder.Services.AddSingleton<AgendamentoConfirmadoProducer>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

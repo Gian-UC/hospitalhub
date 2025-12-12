@@ -8,9 +8,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mysql-agendamentos:
     image: mysql:8.0
@@ -21,32 +23,11 @@ services:
       MYSQL_DATABASE: hospital_agendamentos
     ports:
       - "3307:3306"
-    volumes:
-      - agendamentos_data:/var/lib/mysql
-
-  mysql-clinica:
-    image: mysql:8.0
-    container_name: mysql-clinica
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ClinicaDB
-    ports:
-      - "3308:3306"
-    volumes:
-      - clinica_data:/var/lib/mysql
-
-  mysql-cirurgico:
-    image: mysql:8.0
-    container_name: mysql-cirurgico
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: CirurgicoDB
-    ports:
-      - "3309:3306"
-    volumes:
-      - cirurgico_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   agendamentos-api:
     build:
@@ -54,10 +35,27 @@ services:
       dockerfile: Dockerfile
     container_name: agendamentos-api
     depends_on:
-      - mysql-agendamentos
-      - rabbitmq
+      mysql-agendamentos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "5001:8080"
+
+  mysql-clinica:
+    image: mysql:8.0
+    container_name: mysql-clinica
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hospital_clinica
+    ports:
+      - "3308:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   clinica-api:
     build:
@@ -65,10 +63,26 @@ services:
       dockerfile: Dockerfile
     container_name: clinica-api
     depends_on:
-      - mysql-clinica
-      - rabbitmq
+      mysql-clinica:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "5002:8080"
+
+  mysql-cirurgico:
+    image: mysql:8.0
+    container_name: mysql-cirurgico    
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hospital_cirurgico
+    ports:
+      - "3309:3306"    
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   cirurgico-api:
     build:
@@ -76,12 +90,12 @@ services:
       dockerfile: Dockerfile
     container_name: cirurgico-api
     depends_on:
-      - mysql-cirurgico
-      - rabbitmq
+      mysql-cirurgico:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "5003:8080"
 
 volumes:
-  agendamentos_data:
-  clinica_data:
-  cirurgico_data:
+  mysql-cirurgico-data:

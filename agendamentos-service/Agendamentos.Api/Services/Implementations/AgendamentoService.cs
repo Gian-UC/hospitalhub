@@ -1,6 +1,8 @@
 using Agendamentos.Api.DTOs;
 using Agendamentos.Api.Domain.Context;
 using Agendamentos.Api.Domain.Entities;
+using Agendamentos.Api.Messaging.Events;
+using Agendamentos.Api.Messaging.Producer;
 using Agendamentos.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +11,14 @@ namespace Agendamentos.Api.Services.Implementations
     public class AgendamentoService : IAgendamentoService
     {
         private readonly HospitalAgendamentosContext _context;
+        private readonly AgendamentoConfirmadoProducer _producer;
 
-        public AgendamentoService(HospitalAgendamentosContext context)
+        public AgendamentoService(
+            HospitalAgendamentosContext context,
+            AgendamentoConfirmadoProducer producer)
         {
             _context = context;
+            _producer = producer;
         }
 
         public async Task<AgendamentoResponseDto> CriarAsync(AgendamentoCreateDto dto)
@@ -44,11 +50,12 @@ namespace Agendamentos.Api.Services.Implementations
                 .Include(a => a.Paciente)
                 .ToListAsync();
 
-            var result = new List<AgendamentoResponseDto>();
+            var retorno = new List<AgendamentoResponseDto>();
 
             foreach (var ag in lista)
-                result.Add(await MapToResponseDto(ag));
-            return result;
+                retorno.Add(await MapToResponseDto(ag));
+
+            return retorno;
         }
 
         public async Task<AgendamentoResponseDto?> BuscarPorIdAsync(Guid id)
@@ -57,20 +64,34 @@ namespace Agendamentos.Api.Services.Implementations
                 .Include(a => a.Paciente)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (ag == null)
-                return null;
+            if (ag == null) return null;
 
             return await MapToResponseDto(ag);
         }
 
         public async Task<bool> ConfirmarAsync(Guid id)
         {
-            var ag = await _context.Agendamentos.FindAsync(id);
+            var ag = await _context.Agendamentos
+                .Include(a => a.Paciente)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (ag == null)
                 return false;
 
             ag.Confirmado = true;
             await _context.SaveChangesAsync();
+
+            // 🔥 PRODUZIR O EVENTO NO RABBITMQ 🔥
+            var evt = new AgendamentoConfirmadoEvent
+            {
+                AgendamentoId = ag.Id,
+                PacienteId = ag.PacienteId,
+                DataHora = ag.DataHora,
+                Tipo = (int)ag.Tipo
+            };
+
+            _producer.Publicar(evt);
+
             return true;
         }
 
@@ -82,6 +103,7 @@ namespace Agendamentos.Api.Services.Implementations
 
             _context.Agendamentos.Remove(ag);
             await _context.SaveChangesAsync();
+
             return true;
         }
 
