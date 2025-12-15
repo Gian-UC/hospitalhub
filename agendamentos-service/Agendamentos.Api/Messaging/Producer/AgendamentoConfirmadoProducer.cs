@@ -14,7 +14,7 @@ namespace Agendamentos.Api.Messaging.Producer
         {
             var factory = new ConnectionFactory
             {
-                HostName = "hospitalhub-rabbit",
+                HostName = "rabbitmq",
                 Port = 5672,
                 UserName = "guest",
                 Password = "guest"

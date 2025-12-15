@@ -4,7 +4,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: hospitalhub-rabbit
+    container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -28,6 +28,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - mysql-agendamentos-data:/var/lib/mysql
 
   agendamentos-api:
     build:
@@ -56,6 +58,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - mysql-clinica-data:/var/lib/mysql
 
   clinica-api:
     build:
@@ -83,6 +87,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - mysql-cirurgico-data:/var/lib/mysql
 
   cirurgico-api:
     build:
@@ -98,4 +104,6 @@ services:
       - "5003:8080"
 
 volumes:
+  mysql-agendamentos-data:
+  mysql-clinica-data:
   mysql-cirurgico-data:
