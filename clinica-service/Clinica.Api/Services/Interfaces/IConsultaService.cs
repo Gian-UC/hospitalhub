@@ -9,5 +9,6 @@ namespace Clinica.Api.Services.Interfaces
         Task<Consulta?> BuscarPorIdAsync(Guid id);        
         Task<Consulta> RegistrarConsultaAsync(Consulta consulta);        
         Task RegistrarConsultaPorAgendamentoAsync(AgendamentoConfirmadoEvent evt);
+        Task VincularSintomasAsync(Guid consultaId, IEnumerable<Guid> sintomaIds);
     }
 }

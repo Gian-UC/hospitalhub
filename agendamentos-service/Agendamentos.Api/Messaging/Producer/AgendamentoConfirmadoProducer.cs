@@ -7,6 +7,8 @@ namespace Agendamentos.Api.Messaging.Producer
 {
     public class AgendamentoConfirmadoProducer
     {
+        private const string ExchangeName = "agendamentos.events";
+
         private readonly IConnection _connection;
         private readonly IModel _channel;
 
@@ -23,10 +25,10 @@ namespace Agendamentos.Api.Messaging.Producer
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
 
-            _channel.QueueDeclare(
-                queue: "agendamento_confirmado",
+            _channel.ExchangeDeclare(
+                exchange: ExchangeName,
+                type: ExchangeType.Fanout,
                 durable: false,
-                exclusive: false,
                 autoDelete: false,
                 arguments: null
             );
@@ -38,8 +40,8 @@ namespace Agendamentos.Api.Messaging.Producer
             var body = Encoding.UTF8.GetBytes(json);
 
             _channel.BasicPublish(
-                exchange: "",
-                routingKey: "agendamento_confirmado",
+                exchange: ExchangeName,
+                routingKey: string.Empty,
                 basicProperties: null,
                 body: body
             );

@@ -11,6 +11,9 @@ namespace Cirurgico.Api.Messaging.Consumers
 {
     public class AgendamentoConfirmadoConsumer : BackgroundService
     {
+        private const string ExchangeName = "agendamentos.events";
+        private const string QueueName = "agendamento_confirmado.cirurgico";
+
         private readonly IServiceProvider _serviceProvider;
         private readonly IConnection _connection;
         private readonly IModel _channel;
@@ -25,23 +28,38 @@ namespace Cirurgico.Api.Messaging.Consumers
                 Port = 5672,
                 UserName = "guest",
                 Password = "guest",
+                DispatchConsumersAsync = true
             };
 
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
 
+            _channel.ExchangeDeclare(
+                exchange: ExchangeName,
+                type: ExchangeType.Fanout,
+                durable: false,
+                autoDelete: false,
+                arguments: null
+            );
+
             _channel.QueueDeclare(
-                queue: "agendamento_confirmado",
+                queue: QueueName,
                 durable: false,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null
             );
+
+            _channel.QueueBind(
+                queue: QueueName,
+                exchange: ExchangeName,
+                routingKey: string.Empty
+            );
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var consumer = new EventingBasicConsumer(_channel);
+            var consumer = new AsyncEventingBasicConsumer(_channel);
 
             consumer.Received += async (_, ea) =>
             {
@@ -59,12 +77,12 @@ namespace Cirurgico.Api.Messaging.Consumers
             };
 
             _channel.BasicConsume(
-                queue: "agendamento_confirmado",
+                queue: QueueName,
                 autoAck: true,
                 consumer: consumer
             );
 
-            return Task.CompletedTask;
+            await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
         public override void Dispose()

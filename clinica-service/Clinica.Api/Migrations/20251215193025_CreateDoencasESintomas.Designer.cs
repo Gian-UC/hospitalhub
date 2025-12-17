@@ -4,6 +4,7 @@ using Clinica.Api.Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,17 +12,17 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Clinica.Api.Migrations
 {
     [DbContext(typeof(ClinicaContext))]
-    partial class ClinicaContextModelSnapshot : ModelSnapshot
+    [Migration("20251215193025_CreateDoencasESintomas")]
+    partial class CreateDoencasESintomas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .UseCollation("utf8mb4_general_ci")
                 .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            MySqlModelBuilderExtensions.HasCharSet(modelBuilder, "utf8mb4");
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
             modelBuilder.Entity("Clinica.Api.Domain.Entities.Consulta", b =>
@@ -51,21 +52,6 @@ namespace Clinica.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Consultas");
-                });
-
-            modelBuilder.Entity("Clinica.Api.Domain.Entities.ConsultaSintoma", b =>
-                {
-                    b.Property<Guid>("ConsultaId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("SintomaId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("ConsultaId", "SintomaId");
-
-                    b.HasIndex("SintomaId");
-
-                    b.ToTable("ConsultaSintomas");
                 });
 
             modelBuilder.Entity("Clinica.Api.Domain.Entities.Doenca", b =>
@@ -110,25 +96,6 @@ namespace Clinica.Api.Migrations
                     b.ToTable("Sintomas");
                 });
 
-            modelBuilder.Entity("Clinica.Api.Domain.Entities.ConsultaSintoma", b =>
-                {
-                    b.HasOne("Clinica.Api.Domain.Entities.Consulta", "Consulta")
-                        .WithMany("Sintomas")
-                        .HasForeignKey("ConsultaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Clinica.Api.Domain.Entities.Sintoma", "Sintoma")
-                        .WithMany()
-                        .HasForeignKey("SintomaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Consulta");
-
-                    b.Navigation("Sintoma");
-                });
-
             modelBuilder.Entity("Clinica.Api.Domain.Entities.Sintoma", b =>
                 {
                     b.HasOne("Clinica.Api.Domain.Entities.Doenca", "Doenca")
@@ -138,11 +105,6 @@ namespace Clinica.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Doenca");
-                });
-
-            modelBuilder.Entity("Clinica.Api.Domain.Entities.Consulta", b =>
-                {
-                    b.Navigation("Sintomas");
                 });
 
             modelBuilder.Entity("Clinica.Api.Domain.Entities.Doenca", b =>

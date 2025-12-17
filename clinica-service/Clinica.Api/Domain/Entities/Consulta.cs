@@ -14,5 +14,6 @@ namespace Clinica.Api.Domain.Entities
         public StatusConsulta Status { get; set; } = StatusConsulta.Pendente;
 
         public DateTime CriadoEm { get; set; }
+        public ICollection<ConsultaSintoma> Sintomas { get; set; } = new List<ConsultaSintoma>();
     }
 }

@@ -20,6 +20,8 @@ builder.Services.AddDbContext<ClinicaContext>(options =>
 
 // Register Services
 builder.Services.AddScoped<IConsultaService, ConsultaService>();
+builder.Services.AddScoped<IDoencaService, DoencaService>();
+builder.Services.AddScoped<ISintomaService, SintomaService>();
 
 // 🐇 RabbitMQ Consumer
 builder.Services.AddHostedService<AgendamentoConfirmadoConsumer>();
@@ -61,5 +63,11 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ClinicaContext>();
+    db.Database.Migrate();
+}
 
 app.Run();

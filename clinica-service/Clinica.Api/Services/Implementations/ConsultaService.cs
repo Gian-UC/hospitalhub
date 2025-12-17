@@ -22,7 +22,7 @@ namespace Clinica.Api.Services.Implementations
 
         public async Task<Consulta?> BuscarPorIdAsync(Guid id)
         {
-            return await _context.Consultas.FirstOrDefaultAsync(c => c.Id == id);                
+            return await _context.Consultas.FirstOrDefaultAsync(c => c.Id == id);
         }
 
         // Criar uma nova consulta manual (teste)
@@ -51,8 +51,39 @@ namespace Clinica.Api.Services.Implementations
                 Status = StatusConsulta.Pendente,
                 CriadoEm = DateTime.UtcNow
             };
-            
+
             _context.Consultas.Add(consulta);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task VincularSintomasAsync(Guid consultaId, IEnumerable<Guid> sintomaIds)
+        {
+            var consulta = await _context.Consultas
+                .Include(c => c.Sintomas)
+                .FirstOrDefaultAsync(c => c.Id == consultaId);
+
+            if (consulta is null)
+                throw new KeyNotFoundException("Consulta Não encontrada");
+
+            var sintomasExistentes = await _context.Sintomas
+                .Where(s => sintomaIds.Contains(s.Id))
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            foreach (var sintomaId in sintomasExistentes)
+            {
+                var jaExiste = consulta.Sintomas.Any(cs => cs.SintomaId == sintomaId);
+
+                if (!jaExiste)
+                {
+                    consulta.Sintomas.Add(new ConsultaSintoma
+                    {
+                        ConsultaId = consulta.Id,
+                        SintomaId = sintomaId
+                    });
+                }
+            }
+
             await _context.SaveChangesAsync();
         }
     }
