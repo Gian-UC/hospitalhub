@@ -29,6 +29,13 @@ namespace Clinica.Api.Controllers
             return result == null ? NotFound() : Ok(result);
         }
 
+        [HttpGet("{id}/doencas-sugeridas")]
+        public async Task<IActionResult> ObterDoencasSugeridas(Guid id)
+        {
+            var sugestoes = await _service.ObterDoencasSugeridasAsync(id);
+            return Ok(sugestoes);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] ConsultaCreateDto dto)
         {

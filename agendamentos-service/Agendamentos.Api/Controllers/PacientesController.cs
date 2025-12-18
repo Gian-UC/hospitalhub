@@ -19,12 +19,24 @@ namespace Agendamentos.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] Paciente paciente)
         {
-            paciente.Id = Guid.NewGuid();
+            try
+            {
+                var cpfJaExiste = await _context.Pacientes.AnyAsync(p => p.Documento == paciente.Documento);
 
-            _context.Pacientes.Add(paciente);
-            await _context.SaveChangesAsync();
+                if (cpfJaExiste)
+                    return Conflict(new { mensagem = "Já existe um paciente cadastrado com este CPF." });
 
-            return CreatedAtAction(nameof(BuscarPorId), new { id = paciente.Id }, paciente);
+                paciente.Id = Guid.NewGuid();
+
+                _context.Pacientes.Add(paciente);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(BuscarPorId), new { id = paciente.Id }, paciente);
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { mensagem = "Já existe um paciente cadastrado com este CPF."});
+            }
         }
 
         [HttpGet]
@@ -43,6 +55,25 @@ namespace Agendamentos.Api.Controllers
                 return NotFound();
 
             return Ok(paciente);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Deletar(Guid id)
+        {
+            var paciente = await _context.Pacientes
+                .Include(p => p.Agendamentos)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (paciente == null)
+                return NotFound();
+
+            if (paciente.Agendamentos.Any())
+                _context.Agendamentos.RemoveRange(paciente.Agendamentos);
+
+            _context.Pacientes.Remove(paciente);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

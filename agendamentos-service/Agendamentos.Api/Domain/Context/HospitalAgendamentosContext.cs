@@ -20,6 +20,10 @@ namespace Agendamentos.Api.Domain.Context
                 .HasMany(p => p.Agendamentos)
                 .WithOne(a => a.Paciente)
                 .HasForeignKey(a => a.PacienteId);
+
+            modelBuilder.Entity<Paciente>()
+                .HasIndex(p => p.Documento)
+                .IsUnique();
         }
     }   
 }

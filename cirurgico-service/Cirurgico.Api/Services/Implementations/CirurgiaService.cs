@@ -49,15 +49,33 @@ namespace Cirurgico.Api.Services.Implementations
             return true;
         }
 
-        // ❤️ A MÁGICA ACONTECE AQUI
         public async Task RegistrarCirurgiaPorAgendamentoAsync(AgendamentoConfirmadoEvent evt)
         {
+            var cirurgiaNoHorario = await _context.Cirurgias
+                .Where(c => c.DataHora == evt.DataHora && c.Status != CirurgiaStatus.Cancelada)
+                .ToListAsync();
+
+            if (evt.Emergencial)
+            {
+                var jaExisteEmergencial = cirurgiaNoHorario.Any(c => c.Emergencial);
+
+                if (jaExisteEmergencial)
+                    throw new InvalidOperationException("Já existe uma cirurgia emergencial agendada neste horário.");
+            }
+            else
+            {
+                if (cirurgiaNoHorario.Any())
+                    throw new InvalidOperationException("Já existe uma cirurgia marcada neste horário.");
+            }
+
+
             var cirurgia = new Cirurgia
             {
                 Id = Guid.NewGuid(),
                 AgendamentoId = evt.AgendamentoId,
                 PacienteId = evt.PacienteId,
                 DataHora = evt.DataHora,
+                Emergencial = evt.Emergencial,
                 Tipo = evt.Tipo,
                 Status = CirurgiaStatus.Pendente,
                 CriadoEm = DateTime.UtcNow

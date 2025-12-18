@@ -1,6 +1,7 @@
 using Clinica.Api.Domain.Context;
 using Clinica.Api.Domain.Entities;
 using Clinica.Api.Domain.Enums;
+using Clinica.Api.DTOs;
 using Clinica.Api.Messaging.Events;
 using Clinica.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,11 @@ namespace Clinica.Api.Services.Implementations
         // Evente-Driven - Criar consulta a partir do evento de agendamento confirmado
         public async Task RegistrarConsultaPorAgendamentoAsync(AgendamentoConfirmadoEvent evt)
         {
+            var conflito = await _context.Consultas.AnyAsync(c => c.DataHora == evt.DataHora && c.Tipo == evt.Tipo && c.Status != StatusConsulta.Cancelada);
+
+            if (conflito)
+                throw new InvalidOperationException("Já existe uma consulta marcada para este horário.");
+
             var consulta = new Consulta
             {
                 Id = Guid.NewGuid(),
@@ -84,7 +90,45 @@ namespace Clinica.Api.Services.Implementations
                 }
             }
 
+            var doencasSugeridas = await _context.ConsultaSintomas
+                .Where(cs => cs.ConsultaId == consultaId)
+                .Include(cs => cs.Sintoma)
+                    .ThenInclude(s => s.Doenca)
+                .GroupBy(cs => cs.Sintoma.Doenca)
+                .Select(g => new DoencaSugeridaDto
+                {
+                    DoencaId = g.Key.Id,
+                    Nome = g.Key.Nome,
+                    QuantidadeSintomas = g.Count(),
+                    MaiorPrioridade = g.Max(x => (int)x.Sintoma.Prioridade)
+                })
+                .OrderByDescending(ds => ds.QuantidadeSintomas)
+                .ThenByDescending(ds => ds.MaiorPrioridade)
+                .ToListAsync();
+
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<DoencaSugeridaDto>> ObterDoencasSugeridasAsync(Guid consultaId)
+        {
+            var sugestoes = await _context.ConsultaSintomas
+                .Where(cs => cs.ConsultaId == consultaId)
+                .Include(cs => cs.Sintoma)
+                    .ThenInclude(s => s.Doenca)
+                .GroupBy(cs => cs.Sintoma.Doenca)
+                .Select(g => new DoencaSugeridaDto
+                {
+                    DoencaId = g.Key.Id,
+                    Nome = g.Key.Nome,
+                    QuantidadeSintomas = g.Count(),
+                    MaiorPrioridade = g.Max(x => (int)x.Sintoma.Prioridade)
+                })
+                .OrderByDescending(d => d.QuantidadeSintomas)
+                .ThenByDescending(d => d.MaiorPrioridade)
+                .ToListAsync();
+
+            return sugestoes;
         }
     }
 }
+    

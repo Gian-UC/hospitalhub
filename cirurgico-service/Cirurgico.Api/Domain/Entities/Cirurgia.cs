@@ -5,7 +5,7 @@ namespace Cirurgico.Api.Domain.Entities
         public Guid Id { get; set; }
         public Guid AgendamentoId { get; set; }
         public Guid PacienteId { get; set; }
-
+        public bool Emergencial { get; set; }
         public DateTime DataHora { get; set; }
         public int Tipo { get; set; }
 

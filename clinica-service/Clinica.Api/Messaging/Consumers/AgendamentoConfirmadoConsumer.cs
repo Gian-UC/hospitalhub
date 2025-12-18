@@ -74,7 +74,14 @@ namespace Clinica.Api.Messaging.Consumers
                 using var scope = _serviceProvider.CreateScope();
                 var service = scope.ServiceProvider.GetRequiredService<IConsultaService>();
 
-                await service.RegistrarConsultaPorAgendamentoAsync(evt);
+                try
+                {
+                    await service.RegistrarConsultaPorAgendamentoAsync(evt);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.WriteLine($"[CLINICA] Conflito de horário: {ex.Message}");
+                }
             };
 
             _channel.BasicConsume(

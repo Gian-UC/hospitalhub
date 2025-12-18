@@ -8,5 +8,6 @@ namespace Agendamentos.Api.DTOs
         public DateTime DataHora { get; set; }
         public int Tipo { get; set; }
         public string Descricao { get; set; } = string.Empty;
+        public bool Emergencial { get; set; }
     }
 }

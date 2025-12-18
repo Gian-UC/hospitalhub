@@ -19,8 +19,15 @@ namespace Agendamentos.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] AgendamentoCreateDto dto)
         {
-            var result = await _service.CriarAsync(dto);
-            return CreatedAtAction(nameof(BuscarPorId), new { id = result.Id }, result);
+            try
+            {
+                var result = await _service.CriarAsync(dto);
+                return CreatedAtAction(nameof(BuscarPorId), new { id = result.Id }, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         // GET api/agendamentos

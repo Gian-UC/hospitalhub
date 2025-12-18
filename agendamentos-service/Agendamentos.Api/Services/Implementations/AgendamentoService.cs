@@ -27,6 +27,12 @@ namespace Agendamentos.Api.Services.Implementations
             if (paciente == null)
                 throw new KeyNotFoundException("Paciente não encontrado.");
 
+            var conflito = await _context.Agendamentos
+                .AnyAsync(a => a.PacienteId == dto.PacienteId && a.DataHora == dto.DataHora);
+
+            if (conflito)
+                throw new InvalidOperationException("Já existe um agendamento para este paciente no mesmo horário.");   
+
             var ag = new Agendamento
             {
                 Id = Guid.NewGuid(),
@@ -35,7 +41,8 @@ namespace Agendamentos.Api.Services.Implementations
                 Tipo = (TipoAgendamento)dto.Tipo,
                 Descricao = dto.Descricao,
                 Confirmado = false,
-                DataCriacao = DateTime.UtcNow
+                DataCriacao = DateTime.UtcNow,
+                Emergencial = dto.Emergencial
             };
 
             _context.Agendamentos.Add(ag);
@@ -87,7 +94,8 @@ namespace Agendamentos.Api.Services.Implementations
                 AgendamentoId = ag.Id,
                 PacienteId = ag.PacienteId,
                 DataHora = ag.DataHora,
-                Tipo = (int)ag.Tipo
+                Tipo = (int)ag.Tipo,
+                Emergencial = ag.Emergencial
             };
 
             _producer.Publicar(evt);

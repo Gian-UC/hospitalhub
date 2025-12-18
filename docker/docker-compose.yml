@@ -100,6 +100,9 @@ services:
       context: ../cirurgico-service/Cirurgico.Api
       dockerfile: Dockerfile
     container_name: cirurgico-api
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=mysql-cirurgico;Port=3306;Database=hospital_cirurgico;User=root;Password=root;
+      - RabbitMQ__HostName=rabbitmq
     depends_on:
       mysql-cirurgico:
         condition: service_healthy
