@@ -87,7 +87,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
-builder.Services.AddSingleton<AgendamentoConfirmadoProducer>();
+builder.Services.AddSingleton<IAgendamentoConfirmadoProducer, AgendamentoConfirmadoProducer>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

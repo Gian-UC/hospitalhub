@@ -5,7 +5,7 @@ using RabbitMQ.Client;
 
 namespace Agendamentos.Api.Messaging.Producer
 {
-    public class AgendamentoConfirmadoProducer
+    public class AgendamentoConfirmadoProducer : IAgendamentoConfirmadoProducer
     {
         private const string ExchangeName = "agendamentos.events";
 

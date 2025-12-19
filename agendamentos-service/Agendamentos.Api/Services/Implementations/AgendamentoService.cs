@@ -11,11 +11,11 @@ namespace Agendamentos.Api.Services.Implementations
     public class AgendamentoService : IAgendamentoService
     {
         private readonly HospitalAgendamentosContext _context;
-        private readonly AgendamentoConfirmadoProducer _producer;
+        private readonly IAgendamentoConfirmadoProducer _producer;
 
         public AgendamentoService(
             HospitalAgendamentosContext context,
-            AgendamentoConfirmadoProducer producer)
+            IAgendamentoConfirmadoProducer producer)
         {
             _context = context;
             _producer = producer;
