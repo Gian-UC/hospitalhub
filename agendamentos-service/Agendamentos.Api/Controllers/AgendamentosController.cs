@@ -1,9 +1,11 @@
 using Agendamentos.Api.DTOs;
 using Agendamentos.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Agendamentos.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class AgendamentosController : ControllerBase

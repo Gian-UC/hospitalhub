@@ -2,10 +2,22 @@ using Agendamentos.Api.Domain.Context;
 using Agendamentos.Api.Messaging.Producer;
 using Agendamentos.Api.Services.Implementations;
 using Agendamentos.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+var keycloakAuthority = builder.Configuration["Keycloak:Authority"];
+var keycloakAudience = builder.Configuration["Keycloak:Audience"];
+var validIssuers = new[]
+{
+    "http://keycloak:8080/realms/hospital",
+    "http://localhost:8085/realms/hospital"
+};
+
 
 builder.Services.AddDbContext<HospitalAgendamentosContext>(options =>
 {
@@ -21,13 +33,66 @@ builder.Services.AddDbContext<HospitalAgendamentosContext>(options =>
     );
 });
 
-builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
 
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = keycloakAuthority;
+        options.Audience = keycloakAudience;
+        options.RequireHttpsMetadata = false;
+
+        options.TokenValidationParameters = new()
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuers = validIssuers
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
 builder.Services.AddSingleton<AgendamentoConfirmadoProducer>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Agendamentos API",
+        Version = "v1"
+    });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Informe o token JWT no formato: Bearer {seu token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
@@ -56,8 +121,12 @@ app.Lifetime.ApplicationStarted.Register(() =>
     });
 });
 
+
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

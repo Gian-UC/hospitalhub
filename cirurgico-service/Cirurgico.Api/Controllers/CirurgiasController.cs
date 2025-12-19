@@ -1,9 +1,11 @@
 using Cirurgico.Api.Domain.Entities;
 using Cirurgico.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cirurgico.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class CirurgiasController : ControllerBase
@@ -32,7 +34,6 @@ namespace Cirurgico.Api.Controllers
             return Ok(cirurgia);    
         }
 
-        // Opcional: Criar cirurgia manualmente (para testes)
         [HttpPost]
         public async Task<IActionResult> Registrar([FromBody] Cirurgia cirurgia)
         {

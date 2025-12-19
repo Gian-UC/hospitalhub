@@ -2,11 +2,23 @@ using Clinica.Api.Domain.Context;
 using Clinica.Api.Messaging.Consumers;
 using Clinica.Api.Services.Implementations;
 using Clinica.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add DbContext with MySQL
+var keycloakAuthority = builder.Configuration["Keycloak:Authority"];
+var keycloakAudience = builder.Configuration["Keycloak:Audience"];
+
+var validIssuers = new[]
+{
+    "http://keycloak:8080/realms/hospital",
+    "http://localhost:8085/realms/hospital"
+};
+
+
 builder.Services.AddDbContext<ClinicaContext>(options =>
 {
     var cs = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -14,26 +26,77 @@ builder.Services.AddDbContext<ClinicaContext>(options =>
     options.UseMySql(
         cs,
         new MySqlServerVersion(new Version(8, 0, 44)),
-        b => b.MigrationsAssembly("Clinica.Api")    
+        b => b.MigrationsAssembly("Clinica.Api")
     );
 });
 
-// Register Services
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = keycloakAuthority;
+        options.Audience = keycloakAudience;
+        options.RequireHttpsMetadata = false;
+
+        options.TokenValidationParameters = new()
+        {
+            ValidateIssuer = true,
+            ValidIssuers = validIssuers,
+
+            ValidateAudience = true,
+            ValidAudience = keycloakAudience,
+
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+
 builder.Services.AddScoped<IConsultaService, ConsultaService>();
 builder.Services.AddScoped<IDoencaService, DoencaService>();
 builder.Services.AddScoped<ISintomaService, SintomaService>();
 
-// 🐇 RabbitMQ Consumer
+
 builder.Services.AddHostedService<AgendamentoConfirmadoConsumer>();
 
-// Add controllers and Swagger
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Clinica API", Version = "v1" });
+    
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header usando Bearer scheme. Exemplo: \"Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
-// Migrations automáticas (bom pra dev e docker)
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     Task.Run(async () =>
@@ -54,20 +117,16 @@ app.Lifetime.ApplicationStarted.Register(() =>
                 retries--;
                 await Task.Delay(5000);
             }
-        }    
+        }
     });
 });
 
-// Swagger sempre habilitado (bom pra docker)
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapControllers();
+app.UseAuthentication();
+app.UseAuthorization();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ClinicaContext>();
-    db.Database.Migrate();
-}
+app.MapControllers();
 
 app.Run();

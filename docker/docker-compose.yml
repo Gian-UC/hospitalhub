@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -36,6 +35,11 @@ services:
       context: ../agendamentos-service/Agendamentos.Api
       dockerfile: Dockerfile
     container_name: agendamentos-api
+    extra_hosts:
+      - "localhost:host-gateway"
+    environment:
+      - Keycloak__Authority=http://keycloak:8080/realms/hospital
+      - Keycloak__Audience=hospital-api
     depends_on:
       mysql-agendamentos:
         condition: service_healthy
@@ -71,22 +75,29 @@ services:
       context: ../clinica-service/Clinica.Api
       dockerfile: Dockerfile
     container_name: clinica-api
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=mysql-clinica;Port=3306;Database=hospital_clinica;User=root;Password=root;
+      - RabbitMQ__HostName=rabbitmq
+      - Keycloak__Authority=http://keycloak:8080/realms/hospital
+      - Keycloak__Audience=hospital-api
     depends_on:
       mysql-clinica:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     ports:
       - "5002:8080"
 
   mysql-cirurgico:
     image: mysql:8.0
-    container_name: mysql-cirurgico    
+    container_name: mysql-cirurgico
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: hospital_cirurgico
     ports:
-      - "3309:3306"    
+      - "3309:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -103,15 +114,32 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Server=mysql-cirurgico;Port=3306;Database=hospital_cirurgico;User=root;Password=root;
       - RabbitMQ__HostName=rabbitmq
+      - Keycloak__Authority=http://keycloak:8080/realms/hospital
+      - Keycloak__Audience=hospital-api
     depends_on:
       mysql-cirurgico:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     ports:
       - "5003:8080"
-
+    
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.4
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8085:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+  
 volumes:
   mysql-agendamentos-data:
   mysql-clinica-data:
   mysql-cirurgico-data:
+  keycloak_data:
