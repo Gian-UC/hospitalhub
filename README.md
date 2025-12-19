@@ -146,26 +146,75 @@ RabbitMQ UI: http://localhost:15672
 
 ## 🧪 Passo a Passo de Testes (Fluxo Completo)
 
-1️⃣ Gerar Tokens no Keycloak
+1️⃣ Gerar Token no Keycloak (Postman)
 
-Endpoint:
+Request:
 
 POST http://localhost:8085/realms/hospital/protocol/openid-connect/token
 
-Body (x-www-form-urlencoded):
+Authorization (OAuth 2.0):
 
-grant_type=password
-client_id=hospital-api
-username=<usuario>
-password=<senha>
+Grant Type: Password Credentials
 
-Gerar:
+Client ID: hospital-api
 
-TOKEN_USER
+Username: user_user / admin_user / medico_user
 
-TOKEN_ADMIN
+Password: senha do usuário
 
-TOKEN_MEDICO
+Scope: openid
+
+✔️ Copiar o access_token
+
+2️⃣ Configurar Authorization no Postman
+
+Para todas as requisições:
+
+Aba Authorization
+
+Type: Bearer Token
+
+Token: access_token gerado
+
+⚠️ Nenhum body é utilizado para autenticação.
+
+3️⃣ Criar Agendamento (USER)
+POST http://localhost:5000/agendamentos
+
+Body:
+
+{
+  "pacienteId": "GUID_EXISTENTE",
+  "dataHora": "2025-12-19T15:30:00",
+  "tipo": 1,
+  "descricao": "Teste fluxo completo",
+  "emergencial": false
+}
+
+✔️ Retorno: 201 Created
+
+4️⃣ Confirmar Agendamento (ADMIN)
+PUT http://localhost:5000/agendamentos/{id}/confirmar
+
+Authorization: Bearer Token (ADMIN)
+
+Body: vazio
+
+✔️ Retorno: 204 No Content
+
+5️⃣ Consultar Dados (MEDICO)
+GET http://localhost:5000/consultas
+GET http://localhost:5000/cirurgias
+
+✔️ Retorno: 200 OK
+
+6️⃣ Testes de Segurança
+Cenário	Resultado esperado
+Sem token	401 Unauthorized
+Role errada	403 Forbidden
+ADMIN acessa tudo	200 OK
+
+
 
 
 2️⃣ Criar Agendamento (USER)
@@ -183,14 +232,10 @@ Body:
 
 ✔️ Retorno: 201 Created
 
-
-
 3️⃣ Confirmar Agendamento (ADMIN)
 PUT /agendamentos/{id}/confirmar
 
 ✔️ Retorno: 204 No Content ✔️ Evento publicado no RabbitMQ
-
-
 
 4️⃣ Validar Consumo do Evento
 
@@ -198,15 +243,11 @@ Logs:
 
 docker logs clinica-api --tail=50
 docker logs cirurgico-api --tail=50
-
-
 5️⃣ Consultar Dados (MEDICO)
 GET /consultas
 GET /cirurgias
 
 ✔️ Retorno: 200 OK
-
-
 
 6️⃣ Testes de Segurança
 
@@ -215,6 +256,10 @@ Sem token → 401
 Role errada → 403
 
 ADMIN acessa tudo → 200
+
+
+
+
 
 
 🏁 Conclusão
