@@ -88,7 +88,6 @@ namespace Agendamentos.Api.Services.Implementations
             ag.Confirmado = true;
             await _context.SaveChangesAsync();
 
-            // 🔥 PRODUZIR O EVENTO NO RABBITMQ 🔥
             var evt = new AgendamentoConfirmadoEvent
             {
                 AgendamentoId = ag.Id,

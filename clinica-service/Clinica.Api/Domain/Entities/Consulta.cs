@@ -2,7 +2,7 @@ using Clinica.Api.Domain.Enums;
 
 namespace Clinica.Api.Domain.Entities
 {
-    public class Consulta // Consulta Entity
+    public class Consulta 
     {
         public Guid Id { get; set; }
         public Guid AgendamentoId { get; set; }

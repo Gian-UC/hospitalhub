@@ -4,7 +4,6 @@ using Ocelot.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar Ocelot
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
 
 var keycloakAuthority = builder.Configuration["Keycloak:Authority"];
@@ -18,7 +17,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
-            ValidateIssuer = false, // Desabilitar validação do issuer por enquanto
+            ValidateIssuer = false, 
             ValidateAudience = true,
             ValidAudiences = new[] { keycloakAudience },
             ValidateLifetime = true

@@ -151,7 +151,6 @@ app.Lifetime.ApplicationStarted.Register(() =>
             }
         }
 
-        // Inicializar Producer para testar conexão
         _ = app.Services.GetRequiredService<AgendamentoConfirmadoProducer>();
     });
 });

@@ -26,7 +26,7 @@ namespace Clinica.Api.Services.Implementations
             return await _context.Consultas.FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        // Criar uma nova consulta manual (teste)
+        
         public async Task<Consulta> RegistrarConsultaAsync(Consulta consulta)
         {
             consulta.Id = Guid.NewGuid();
@@ -39,7 +39,7 @@ namespace Clinica.Api.Services.Implementations
             return consulta;
         }
 
-        // Evente-Driven - Criar consulta a partir do evento de agendamento confirmado
+        
         public async Task RegistrarConsultaPorAgendamentoAsync(AgendamentoConfirmadoEvent evt)
         {
             var conflito = await _context.Consultas.AnyAsync(c => c.DataHora == evt.DataHora && c.Tipo == evt.Tipo && c.Status != StatusConsulta.Cancelada);
