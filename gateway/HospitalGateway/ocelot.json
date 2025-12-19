@@ -1,0 +1,46 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/Agendamentos",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "agendamentos-api", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/agendamentos",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/Consultas",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "clinica-api", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/consultas",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/Cirurgias",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "cirurgico-api", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/cirurgias",
+      "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5000"
+  }
+}

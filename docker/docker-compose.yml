@@ -137,6 +137,20 @@ services:
       - "8085:8080"
     volumes:
       - keycloak_data:/opt/keycloak/data
+      
+  gateway-api:
+    build:
+      context: ../gateway/HospitalGateway
+      dockerfile: Dockerfile
+    container_name: gateway-api
+    depends_on:
+      - agendamentos-api         
+      - clinica-api    
+      - cirurgico-api
+      - keycloak
+    ports:
+      - "5000:8080"
+
   
 volumes:
   mysql-agendamentos-data:
