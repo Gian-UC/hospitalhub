@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Clinica.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "MedicoOnly")]
     [ApiController]
     [Route("api/[controller]")]
     public class ConsultasController : ControllerBase
@@ -38,6 +38,7 @@ namespace Clinica.Api.Controllers
             return Ok(sugestoes);
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] ConsultaCreateDto dto)
         {
@@ -54,7 +55,7 @@ namespace Clinica.Api.Controllers
             return CreatedAtAction(nameof(BuscarPorId), new { id = criada.Id }, criada);
         }
 
-
+        [Authorize(Policy = "MedicoOnly")]
         [HttpPost("{consultaId}/sintomas")]
         public async Task<IActionResult> VincularSintomas(Guid consultaId, [FromBody] ConsultaSintomasAddDto dto)
         {

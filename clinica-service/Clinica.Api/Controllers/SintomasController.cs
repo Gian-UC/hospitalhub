@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Clinica.Api.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class SintomasController : ControllerBase
@@ -18,13 +17,15 @@ namespace Clinica.Api.Controllers
             _service = service;
         }
 
+        [Authorize(Policy = "MedicoOnly")]
         [HttpGet]
-        public async Task<IActionResult> BuscarPorId()
+        public async Task<IActionResult> Listar()
         {
             var sintomas = await _service.ListarAsync();
             return Ok(sintomas);
         }
 
+        [Authorize(Policy = "MedicoOnly")]
         [HttpGet("doenca/{doencaId}")]
         public async Task<IActionResult> ListarPorDoenca(Guid doencaId)
         {
@@ -32,6 +33,7 @@ namespace Clinica.Api.Controllers
             return Ok(sintomas);
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] SintomaCreateDto dto)
         {
@@ -43,7 +45,7 @@ namespace Clinica.Api.Controllers
             };
             
             var criado = await _service.CriarAsync(sintoma);
-            return CreatedAtAction(nameof(BuscarPorId), new { id = criado.Id }, criado);
+            return CreatedAtAction(nameof(Listar), new { id = criado.Id }, criado);
         }
     }
 }

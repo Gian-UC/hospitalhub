@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cirurgico.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "MedicoOnly")]
     [ApiController]
     [Route("api/[controller]")]
     public class CirurgiasController : ControllerBase
@@ -34,6 +34,7 @@ namespace Cirurgico.Api.Controllers
             return Ok(cirurgia);    
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpPost]
         public async Task<IActionResult> Registrar([FromBody] Cirurgia cirurgia)
         {

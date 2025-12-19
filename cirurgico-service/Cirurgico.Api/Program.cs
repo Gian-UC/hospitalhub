@@ -5,6 +5,8 @@ using Cirurgico.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,11 +51,43 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = keycloakAudience,
 
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true
+            ValidateIssuerSigningKey = true,
+            RoleClaimType = ClaimTypes.Role
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var identity = context.Principal?.Identity as ClaimsIdentity;
+                if (identity == null) return Task.CompletedTask;
+
+                var realmAccess = context.Principal?.FindFirst("realm_access")?.Value;
+                if (string.IsNullOrWhiteSpace(realmAccess)) return Task.CompletedTask;
+
+                using var doc = JsonDocument.Parse(realmAccess);
+                if (!doc.RootElement.TryGetProperty("roles", out var roles)) return Task.CompletedTask;
+
+                foreach (var role in roles.EnumerateArray())
+                {
+                    var roleName = role.GetString();
+                    if (!string.IsNullOrWhiteSpace(roleName))
+                        identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
-builder.Services.AddAuthorization();    
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("MedicoOnly", policy =>    
+        policy.RequireRole("MEDICO", "ADMIN"));
+
+    options.AddPolicy("AdminOnly", policy =>    
+        policy.RequireRole("ADMIN"));   
+});    
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

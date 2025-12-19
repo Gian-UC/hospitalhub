@@ -9,42 +9,79 @@ namespace Agendamentos.Api.Messaging.Producer
     {
         private const string ExchangeName = "agendamentos.events";
 
-        private readonly IConnection _connection;
-        private readonly IModel _channel;
+        private IConnection? _connection;
+        private IModel? _channel;
+        private readonly ILogger<AgendamentoConfirmadoProducer> _logger;
 
-        public AgendamentoConfirmadoProducer()
+        public AgendamentoConfirmadoProducer(ILogger<AgendamentoConfirmadoProducer> logger)
         {
-            var factory = new ConnectionFactory
+            _logger = logger;
+            TentarConectar();
+        }
+
+        private void TentarConectar()
+        {
+            try
             {
-                HostName = "rabbitmq",
-                Port = 5672,
-                UserName = "guest",
-                Password = "guest"
-            };
+                var factory = new ConnectionFactory
+                {
+                    HostName = "rabbitmq",
+                    Port = 5672,
+                    UserName = "guest",
+                    Password = "guest"
+                };
 
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
+                _connection = factory.CreateConnection();
+                _channel = _connection.CreateModel();
 
-            _channel.ExchangeDeclare(
-                exchange: ExchangeName,
-                type: ExchangeType.Fanout,
-                durable: false,
-                autoDelete: false,
-                arguments: null
-            );
+                _channel.ExchangeDeclare(
+                    exchange: ExchangeName,
+                    type: ExchangeType.Fanout,
+                    durable: false,
+                    autoDelete: false,
+                    arguments: null
+                );
+
+                _logger.LogInformation("Conectado ao RabbitMQ e exchange '{ExchangeName}' declarada", ExchangeName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao conectar ao RabbitMQ. Producer não funcionará corretamente.");
+            }
         }
 
         public void Publicar(AgendamentoConfirmadoEvent evt)
         {
-            var json = JsonSerializer.Serialize(evt);
-            var body = Encoding.UTF8.GetBytes(json);
+            if (_channel == null || _connection == null || !_connection.IsOpen)
+            {
+                _logger.LogWarning("Canal RabbitMQ não está disponível. Tentando reconectar...");
+                TentarConectar();
+            }
 
-            _channel.BasicPublish(
-                exchange: ExchangeName,
-                routingKey: string.Empty,
-                basicProperties: null,
-                body: body
-            );
+            if (_channel == null)
+            {
+                _logger.LogError("Não foi possível publicar evento. Canal RabbitMQ indisponível.");
+                return;
+            }
+
+            try
+            {
+                var json = JsonSerializer.Serialize(evt);
+                var body = Encoding.UTF8.GetBytes(json);
+
+                _channel.BasicPublish(
+                    exchange: ExchangeName,
+                    routingKey: string.Empty,
+                    basicProperties: null,
+                    body: body
+                );
+
+                _logger.LogInformation("Evento AgendamentoConfirmado publicado: {AgendamentoId}", evt.AgendamentoId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao publicar evento no RabbitMQ");
+            }
         }
     }
 }

@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Agendamentos.Api.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class AgendamentosController : ControllerBase
@@ -17,7 +16,7 @@ namespace Agendamentos.Api.Controllers
             _service = service;
         }
 
-        // POST api/agendamentos
+        [Authorize(Roles = "USER,ADMIN")]
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] AgendamentoCreateDto dto)
         {
@@ -32,7 +31,7 @@ namespace Agendamentos.Api.Controllers
             }
         }
 
-        // GET api/agendamentos
+        [Authorize(Roles = "USER,ADMIN")]
         [HttpGet]
         public async Task<IActionResult> Listar()
         {
@@ -40,7 +39,7 @@ namespace Agendamentos.Api.Controllers
             return Ok(result);
         }
 
-        // GET api/agendamentos/{id}
+        [Authorize(Roles = "USER,ADMIN")]
         [HttpGet("{id}")]
         public async Task<IActionResult> BuscarPorId(Guid id)
         {
@@ -51,7 +50,7 @@ namespace Agendamentos.Api.Controllers
             return Ok(result);
         }
 
-        // PUT api/agendamentos/{id}/confirmar
+        [Authorize(Roles = "ADMIN")]
         [HttpPut("{id}/confirmar")]
         public async Task<IActionResult> Confirmar(Guid id)
         {
@@ -62,7 +61,7 @@ namespace Agendamentos.Api.Controllers
             return NoContent();
         }
 
-        // DELETE api/agendamentos/{id}
+        [Authorize(Roles = "USER,ADMIN")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Cancelar(Guid id)
         {

@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,11 +51,40 @@ builder.Services
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuers = validIssuers
+            ValidIssuers = validIssuers,
+            RoleClaimType = ClaimTypes.Role
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var identity = context.Principal?.Identity as ClaimsIdentity;
+                if (identity == null) return Task.CompletedTask;
+
+                var realmAccess = context.Principal?.FindFirst("realm_access")?.Value;
+                if (string.IsNullOrWhiteSpace(realmAccess)) return Task.CompletedTask;
+
+                using var doc = JsonDocument.Parse(realmAccess);
+                if (!doc.RootElement.TryGetProperty("roles", out var roles)) return Task.CompletedTask;
+
+                foreach (var role in roles.EnumerateArray())
+                {
+                    var roleName = role.GetString();
+                    if (!string.IsNullOrWhiteSpace(roleName))                    
+                        identity.AddClaim(new Claim(ClaimTypes.Role, roleName));                    
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("ADMIN"));
+
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("USER"));
+});
 
 builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
 builder.Services.AddSingleton<AgendamentoConfirmadoProducer>();
@@ -118,6 +150,9 @@ app.Lifetime.ApplicationStarted.Register(() =>
                 await Task.Delay(5000);
             }
         }
+
+        // Inicializar Producer para testar conexão
+        _ = app.Services.GetRequiredService<AgendamentoConfirmadoProducer>();
     });
 });
 
