@@ -1,0 +1,14 @@
+{
+  "Smtp": {
+    "Host": "smtp.gmail.com",
+    "Port": "587",
+    "FromName": "HospitalHub",
+    "FromEmail": "SEU_EMAIL@gmail.com",
+
+    "UseSsl": "false",
+    "UseStartTls": "true",
+
+    "User": "SEU_EMAIL@gmail.com",
+    "Pass": "COLE_AQUI_SUA_APP_PASSWORD"
+  }
+}
