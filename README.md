@@ -1,267 +1,235 @@
-🏥 Hospital Microservices Platform
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:141e30,100:243b55&height=170&section=header&text=HospitalHub&fontSize=42&fontColor=ffffff" />
+</p>
 
-Projeto completo de microsserviços com .NET 8, comunicação assíncrona via RabbitMQ, API Gateway com Ocelot e autenticação/autorização com Keycloak (JWT + Roles).
+<p align="center">
+  <img src="https://img.shields.io/badge/.NET-8.0.6-blueviolet"/>
+  <img src="https://img.shields.io/badge/Docker-Enabled-blue"/>
+  <img src="https://img.shields.io/badge/RabbitMQ-Async-orange"/>
+  <img src="https://img.shields.io/badge/Keycloak-Security-green"/>
+</p>
 
-Este projeto demonstra, na prática, um fluxo end‑to‑end com controle de acesso por perfil (USER, ADMIN, MEDICO), persistência em bancos separados e orquestração via Docker.
+# 🏥 HospitalHub – Arquitetura de Microserviços
 
-📐 Arquitetura Geral
+Projeto backend desenvolvido com .NET 8, arquitetura de microserviços, Gateway API, Keycloak para autenticação/autorização, RabbitMQ para comunicação assíncrona e envio de e-mails via serviço de notificação.
 
+## 🧱 Arquitetura Geral
 
-<img width="712" height="292" alt="image" src="https://github.com/user-attachments/assets/5ef9d1b2-cfbe-4e18-bb34-79cce900afde" />
+Gateway API
+Centraliza o acesso às APIs internas e valida autenticação/roles.
 
+Agendamentos API
+Responsável pelo cadastro e confirmação de agendamentos.
 
+Clínica API
+Responsável pelas consultas médicas, sintomas e doenças.
 
-Cada microsserviço possui banco MySQL próprio
+Cirúrgico API
+Responsável pelas cirurgias vinculadas aos agendamentos.
 
-Comunicação assíncrona desacoplada
-
-Segurança centralizada no Gateway
-
-
-
-## 🧩 Microsserviços
-📅 Agendamentos API
-
-Criação de pacientes
-
-Criação de agendamentos
-
-Confirmação de agendamentos (ADMIN)
-
-Publicação de evento AgendamentoConfirmado
-
-
-## 🏥 Clínica API
-
-Consumo do evento de agendamento confirmado
-
-Criação automática de consultas
-
-Gestão de doenças e sintomas
-
-
-
-## 🏥 Cirúrgico API
-
-Consumo do evento de agendamento confirmado
-
-Criação automática de cirurgias
-
-
-
-## 🚪 API Gateway
-
-Centraliza acesso às APIs
-
-Validação de JWT
-
-Controle de acesso por roles
-
-
-
-## 🔐 Autenticação e Autorização
-Roles
-
-USER: cria pacientes e agendamentos
-
-ADMIN: confirma agendamentos
-
-MEDICO: consulta consultas e cirurgias
-
-Tecnologias
-
-Keycloak
-
-OAuth2 / OpenID Connect
-
-JWT Bearer Tokens
-
-
-
-## 📦 Tecnologias Utilizadas
-
-.NET 8 (ASP.NET Core)
-
-Entity Framework Core
-
-MySQL 8
+Notificação API
+Microserviço assíncrono que consome eventos do RabbitMQ e envia e-mails.
 
 RabbitMQ
-
-Ocelot API Gateway
+Broker de mensagens para desacoplamento entre serviços.
 
 Keycloak
+Autenticação e autorização baseada em JWT e roles.
 
-Docker & Docker Compose
 
-Swagger / OpenAPI
 
+## 🔐 Controle de Acesso por API (Keycloak Roles)
 
-## 📥 Pacotes Instalados (por projeto)
-Comandos base (.NET):
+### Gateway API
 
--- dotnet add package Microsoft.EntityFrameworkCore --version 8.0.6
--- dotnet add package Microsoft.EntityFrameworkCore.Design --version 8.0.6
--- dotnet add package Pomelo.EntityFrameworkCore.MySql --version 8.0.2
--- dotnet add package Swashbuckle.AspNetCore --version 6.5.0
+| Endpoint        | USER | MEDICO | ADMIN |
+|-----------------|------|--------|-------|
+| /agendamentos   | ✔️   | ✔️     | ✔️    |
+| /consultas      | ✔️   | ✔️     | ✔️    |
+| /cirurgias      | ✔️   | ✔️     | ✔️    |
 
-Autenticação / Segurança
+### Agendamentos API
 
--- dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer --version 8.0.0
--- dotnet add package Microsoft.IdentityModel.Tokens
+| Endpoint                                  | USER | MEDICO | ADMIN |
+|-------------------------------------------|------|--------|-------|
+| POST /api/Agendamentos                    | ✔️   | ❌     | ✔️    |
+| GET /api/Agendamentos                     | ✔️   | ❌     | ✔️    |
+| PUT /api/Agendamentos/{id}/confirmar      | ❌   | ❌     | ✔️    |
+| GET /api/Pacientes/{id}                   | ✔️   | ✔️     | ✔️    |
 
-RabbitMQ
 
--- dotnet add package RabbitMQ.Client
+### Clínica API
 
-Gateway
+| Endpoint                                  | USER | MEDICO | ADMIN |
+|-------------------------------------------|------|--------|-------|
+| GET /api/Consultas                        | ❌   | ✔️     | ✔️    |
+| POST /api/Consultas                       | ❌   | ✔️     | ✔️    |
+| POST /api/Consultas/{id}/sintomas         | ❌   | ✔️     | ✔️    |
+| GET /api/Doencas                          | ❌   | ✔️     | ✔️    |
+| POST /api/Doencas                         | ❌   | ✔️     | ✔️    |
 
--- dotnet add package Ocelot
+### Cirurgico API
 
-## 🐳 Subindo o Projeto com Docker
-Pré‑requisitos
+| Endpoint           | USER | MEDICO | ADMIN |
+|--------------------|------|--------|-------|
+| GET /api/Cirurgias | ❌   | ✔️     | ✔️    |
+| POST /api/Cirurgias| ❌   | ✔️     | ✔️    |
 
-Docker
+### Notificação API
 
-Docker Compose
+| Serviço                | USER | MEDICO | ADMIN |
+|------------------------|------|--------|-------|
+| Consumer RabbitMQ      | —    | —      | —     |
+| Endpoints HTTP         | ❌   | ❌     | ❌    |
 
-Subir tudo
+### Usuários do Keycloak
 
--- docker compose up --build
+| Usuário      | Role   | Descrição                                      |
+|--------------|--------|------------------------------------------------|
+| user         | USER   | Criação e consulta de agendamentos             |
+| medico       | MEDICO | Consulta de consultas e cirurgias              |
+| admin        | ADMIN  | Confirmação de agendamentos e acesso total     |
+| dev          | ADMIN  | Usuário técnico para testes                    |
 
-## Serviços disponíveis:
+# 🐇 Comunicação Assíncrona (RabbitMQ)
 
-Gateway: http://localhost:5000/swagger
+Quando um agendamento é confirmado:
 
-Agendamentos: http://localhost:5001/swagger
+Agendamentos API
+   → publica evento AgendamentoConfirmado
+       → RabbitMQ
+           → Clínica API
+           → Cirúrgico API
+           → Notificação API
 
-Clínica: http://localhost:5002/swagger
+Esse modelo garante:
 
-Cirúrgico: http://localhost:5003/swagger
+Desacoplamento entre serviços
 
-Keycloak: http://localhost:8085
+Maior resiliência
 
-RabbitMQ UI: http://localhost:15672
+Escalabilidade
 
+## 📧 Envio de E-mail (Notificação)
 
-## 🧪 Passo a Passo de Testes (Fluxo Completo)
+O envio de e-mails é realizado pelo microserviço Notificação API, de forma assíncrona, após a confirmação do agendamento.
 
-1️⃣ Gerar Token no Keycloak (Postman)
+## 🧪 Ambiente de Teste – MailHog (e-mail fake)
 
-Request:
+Por padrão, o projeto utiliza o MailHog para testes locais.
 
-POST http://localhost:8085/realms/hospital/protocol/openid-connect/token
+Como testar:
 
-Authorization (OAuth 2.0):
+Suba os containers:
 
-Grant Type: Password Credentials
+docker compose up -d --build
 
-Client ID: hospital-api
+Crie um paciente com um e-mail fictício
 
-Username: user_user / admin_user / medico_user
+Crie e confirme um agendamento (ADMIN)
 
-Password: senha do usuário
+Acesse:
 
-Scope: openid
+http://localhost:8025
 
-✔️ Copiar o access_token
+O e-mail de confirmação aparecerá na interface do MailHog.
 
-2️⃣ Configurar Authorization no Postman
 
-Para todas as requisições:
+## 📬 Ambiente Real – Gmail (e-mail verdadeiro)
 
-Aba Authorization
+Também é possível testar o envio de e-mails reais via SMTP Gmail.
 
-Type: Bearer Token
+## 🔐 Pré-requisitos
 
-Token: access_token gerado
+- Conta Gmail
 
-⚠️ Nenhum body é utilizado para autenticação.
+- Verificação em duas etapas ativada
 
-3️⃣ Criar Agendamento (USER)
-POST http://localhost:5000/agendamentos
+- Senha de app gerada no Google:
+- No seu Gmail, clique na sua foto no canto superior a direita da tela > Clique em Gerenciar sua Conta Google > Clique em Segurança e Login > Como você faz login no Google, aqui habilite a verificação em duas etapas > Após isso, volte para a página anterior e clique na 🔍 no canto superior a esquerda onde está escrito "Pesquisar na Sua Conta do Google" e escreva: Senhas de APP e clique na opção, vai redirecionar para a tela de criação da senha, só seguir o passo a passo.
+- Obs: Sempre vai pedir pra colocar senha ou vai pedir o código de dois fatores para você conseguir acessar essas páginas.
 
-Body:
+## ⚙️ Configuração (docker-compose)
+notificacao-api:
+  environment:
+    - Smtp__Host=smtp.gmail.com
+    - Smtp__Port=587
+    - Smtp__FromName=HospitalHub
+    - Smtp__FromEmail=SEU_EMAIL@gmail.com
+    - Smtp__User=SEU_EMAIL@gmail.com
+    - Smtp__Pass=SENHA_DE_APP_GMAIL
 
-{
-  "pacienteId": "GUID_EXISTENTE",
-  "dataHora": "2025-12-19T15:30:00",
-  "tipo": 1,
-  "descricao": "Teste fluxo completo",
-  "emergencial": false
-}
 
-✔️ Retorno: 201 Created
+## ⚠️ Nunca utilize a senha real do Gmail. Use apenas senha de app.
 
-4️⃣ Confirmar Agendamento (ADMIN)
-PUT http://localhost:5000/agendamentos/{id}/confirmar
+Depois disso:
 
-Authorization: Bearer Token (ADMIN)
+docker compose down
+docker compose up -d --build
 
-Body: vazio
+## 🧪 Teste
 
-✔️ Retorno: 204 No Content
+Crie um paciente com seu e-mail real
 
-5️⃣ Consultar Dados (MEDICO)
-GET http://localhost:5000/consultas
-GET http://localhost:5000/cirurgias
+Crie e confirme um agendamento
 
-✔️ Retorno: 200 OK
+O e-mail de confirmação será enviado para sua caixa de entrada 📱📧
 
-6️⃣ Testes de Segurança
-Cenário	Resultado esperado
-Sem token	401 Unauthorized
-Role errada	403 Forbidden
-ADMIN acessa tudo	200 OK
+## 🧠 Observação Importante
 
+O envio de e-mail é assíncrono.
+Falhas no SMTP não impactam o fluxo principal de agendamentos.
 
+## 📦 Tecnologias e Versões Utilizadas
+## 🔧 Runtime e SDK
 
+| Tecnologia | Versão |
+|-----------|--------|
+| .NET SDK  | 8.0.6  |
+| .NET Runtime | 8.0.6 |
+| ASP.NET Core | 8.0.6 |
 
-2️⃣ Criar Agendamento (USER)
-POST /agendamentos
+## 📚 Pacotes NuGet (APIs)
 
-Body:
+| Pacote NuGet                              | Versão | Utilização |
+|------------------------------------------|--------|------------|
+| Microsoft.EntityFrameworkCore             | 8.0.6  | ORM |
+| Microsoft.EntityFrameworkCore.Design     | 8.0.6  | Migrations |
+| Microsoft.EntityFrameworkCore.Tools      | 8.0.6  | CLI EF |
+| Pomelo.EntityFrameworkCore.MySql         | 8.0.6  | MySQL Provider |
+| Microsoft.AspNetCore.Authentication.JwtBearer | 8.0.6 | Autenticação JWT |
+| Microsoft.OpenApi                         | 1.6.x  | Swagger |
+| Swashbuckle.AspNetCore                   | 6.5.x  | Swagger UI |
 
-{
-  "pacienteId": "GUID_EXISTENTE",
-  "dataHora": "2025-12-19T15:30:00",
-  "tipo": 1,
-  "descricao": "Teste fluxo completo",
-  "emergencial": false
-}
+## 🐇 Mensageria
 
-✔️ Retorno: 201 Created
+| Pacote NuGet        | Versão | Utilização |
+|---------------------|--------|------------|
+| RabbitMQ.Client     | 6.8.x  | Mensageria assíncrona |
 
-3️⃣ Confirmar Agendamento (ADMIN)
-PUT /agendamentos/{id}/confirmar
+## 📧 Envio de E-mail (Notificação API)
 
-✔️ Retorno: 204 No Content ✔️ Evento publicado no RabbitMQ
+| Pacote NuGet | Versão | Utilização |
+|--------------|--------|------------|
+| MailKit      | 4.x    | Envio de e-mail SMTP |
+| MimeKit      | 4.x    | Construção de mensagens |
 
-4️⃣ Validar Consumo do Evento
+## 🐳 Infraestrutura (Containers)
 
-Logs:
+| Tecnologia | Versão |
+|-----------|--------|
+| Docker | Latest |
+| Docker Compose | 3.9 |
+| RabbitMQ | 3-management |
+| MySQL | 8.0 |
+| Keycloak | 24.0.4 |
+| MailHog | Latest |
 
-docker logs clinica-api --tail=50
-docker logs cirurgico-api --tail=50
-5️⃣ Consultar Dados (MEDICO)
-GET /consultas
-GET /cirurgias
+## 🖥️ Frontend (Opcional / Futuro)
 
-✔️ Retorno: 200 OK
+Este projeto foi desenvolvido com foco em arquitetura backend,
+microsserviços, mensageria e segurança.
 
-6️⃣ Testes de Segurança
-
-Sem token → 401
-
-Role errada → 403
-
-ADMIN acessa tudo → 200
-
-
-
-
-
-
-🏁 Conclusão
-
-Este projeto demonstra uma arquitetura moderna, segura e escalável baseada em microsserviços, com comunicação assíncrona, controle de acesso por perfil e boas práticas de engenharia de software.
+Um frontend (Angular ou React) pode ser integrado futuramente
+consumindo o Gateway API, respeitando as regras de autenticação
+e autorização definidas no Keycloak.
