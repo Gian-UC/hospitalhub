@@ -151,6 +151,37 @@ services:
     ports:
       - "5000:8080"
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "8025:8025"   # UI
+      - "1025:1025"   # SMTP
+
+  notificacao-api:
+    build:
+      context: ../notificacao/Notificacao.Api
+      dockerfile: Dockerfile
+    container_name: notificacao-api
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      agendamentos-api:
+        condition: service_started
+      mailhog:
+        condition: service_started
+    environment:
+      # Default: MailHog local (sem TLS e sem autenticação)
+      - Smtp__Host=smtp.gmail.com
+      - Smtp__Port=587
+      - Smtp__FromName=HospitalHub
+      - Smtp__FromEmail=SEU_EMAIL@gmail.com
+      # Para Gmail/Outlook, configure via .env (App Password recomendado)
+      - Smtp__User=SEU_EMAIL@gmail.com
+      - Smtp__Pass=SENHA_DE_APP_GMAIL
+    ports:
+      - "5004:8080"
+
   
 volumes:
   mysql-agendamentos-data:

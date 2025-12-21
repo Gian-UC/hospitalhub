@@ -14,6 +14,19 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/Agendamentos/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "agendamentos-api", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/agendamentos/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
       "DownstreamPathTemplate": "/api/Consultas",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -27,6 +40,19 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/Consultas/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "clinica-api", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/consultas/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
       "DownstreamPathTemplate": "/api/Cirurgias",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -34,6 +60,19 @@
       ],
       "UpstreamPathTemplate": "/cirurgias",
       "UpstreamHttpMethod": [ "GET" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/Cirurgias/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "cirurgico-api", "Port": 8080 }
+      ],
+      "UpstreamPathTemplate": "/cirurgias/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
         "AllowedScopes": []

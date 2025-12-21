@@ -17,9 +17,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
-            ValidateIssuer = false, 
+            ValidateIssuer = false,
             ValidateAudience = true,
-            ValidAudiences = new[] { keycloakAudience },
+            ValidAudiences = new[] { keycloakAudience!, "account" },
             ValidateLifetime = true
         };
     });

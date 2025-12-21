@@ -52,6 +52,7 @@ builder.Services
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuers = validIssuers,
+            ValidAudiences = new[] { keycloakAudience!, "account" },
             RoleClaimType = ClaimTypes.Role
         };
 

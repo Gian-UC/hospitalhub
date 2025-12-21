@@ -47,7 +47,7 @@ builder.Services
             ValidIssuers = validIssuers,
 
             ValidateAudience = true,
-            ValidAudience = keycloakAudience,
+            ValidAudiences = new[] { keycloakAudience!, "account" },
 
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,

@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -17,6 +17,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agendamentos.Api", "agendamentos-service\Agendamentos.Api\Agendamentos.Api.csproj", "{D0AD56D4-57A9-30F5-38AF-C123058E76A1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HospitalGateway", "gateway\HospitalGateway\HospitalGateway.csproj", "{D5DF9518-0129-0B11-693A-4AE283754088}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notificacao", "notificacao", "{8E3211B0-6BEE-4F65-A9E0-3CFC72CB29B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notificacao.Api.Tests", "notificacao\Notificacao.Api.Tests\Notificacao.Api.Tests.csproj", "{E5A7BB80-06C0-495D-8266-366CB0DE108C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HospitalGateway.Tests", "gateway\HospitalGateway.Tests\HospitalGateway.Tests.csproj", "{28B372A6-24CA-476C-8735-3E5C27BD8B08}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -40,6 +46,14 @@ Global
 		{D5DF9518-0129-0B11-693A-4AE283754088}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5DF9518-0129-0B11-693A-4AE283754088}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5DF9518-0129-0B11-693A-4AE283754088}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5A7BB80-06C0-495D-8266-366CB0DE108C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5A7BB80-06C0-495D-8266-366CB0DE108C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5A7BB80-06C0-495D-8266-366CB0DE108C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5A7BB80-06C0-495D-8266-366CB0DE108C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28B372A6-24CA-476C-8735-3E5C27BD8B08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28B372A6-24CA-476C-8735-3E5C27BD8B08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28B372A6-24CA-476C-8735-3E5C27BD8B08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28B372A6-24CA-476C-8735-3E5C27BD8B08}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -49,6 +63,8 @@ Global
 		{4255F7E2-8A13-183D-3D59-54042DFE2968} = {F064B941-8F5D-0FD7-5E45-FA8CD96DCBD2}
 		{D0AD56D4-57A9-30F5-38AF-C123058E76A1} = {FE6823E7-9D26-9FBC-3E75-F2AE8F77EEBB}
 		{D5DF9518-0129-0B11-693A-4AE283754088} = {E7BDDBC6-9FD1-D1D7-ACD8-2C4F8E3D2461}
+		{E5A7BB80-06C0-495D-8266-366CB0DE108C} = {8E3211B0-6BEE-4F65-A9E0-3CFC72CB29B9}
+		{28B372A6-24CA-476C-8735-3E5C27BD8B08} = {E7BDDBC6-9FD1-D1D7-ACD8-2C4F8E3D2461}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5E66A482-0591-4488-B00C-FC519AE652E5}
