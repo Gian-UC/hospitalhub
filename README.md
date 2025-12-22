@@ -18,6 +18,218 @@
 
 Projeto backend desenvolvido com .NET 8, arquitetura de microserviços, Gateway API, Keycloak para autenticação/autorização, RabbitMQ para comunicação assíncrona e envio de e-mails via serviço de notificação.
 
+## 🚀 Como utilizar (passo a passo)
+
+### 1) Subir o ambiente
+
+Pelo diretório `docker/`:
+
+```bash
+docker compose up -d --build
+```
+
+Serviços e portas locais:
+
+- Gateway (Ocelot): `http://localhost:5000`
+- Agendamentos API: `http://localhost:5001`
+- Clínica API: `http://localhost:5002`
+- Cirúrgico API: `http://localhost:5003`
+- Notificação API: `http://localhost:5004`
+- Keycloak: `http://localhost:8085`
+- RabbitMQ UI: `http://localhost:15672`
+- MailHog UI: `http://localhost:8025`
+- Jaeger UI (traces): `http://localhost:16686`
+
+### 2) Autenticação (Keycloak) – obter token
+
+As APIs protegem endpoints via JWT (Keycloak). Para chamar endpoints protegidos, obtenha um access token e envie no header:
+
+```http
+Authorization: Bearer <ACCESS_TOKEN>
+```
+
+Exemplo (Password Grant) para obter token no realm `hospital`:
+
+```bash
+curl -s -X POST "http://localhost:8085/realms/hospital/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=hospital-api" \
+  -d "username=user" \
+  -d "password=admin" | jq -r .access_token
+```
+
+> Observação: o projeto aponta para o realm `hospital` e audience `hospital-api`. Garanta que o realm/cliente/usuários/roles estejam configurados no Keycloak de acordo com a seção “Usuários do Keycloak”.
+
+---
+
+## ✅ Passo a passo por API
+
+### 🌐 Gateway API (porta 5000)
+
+Use o Gateway como ponto único de entrada (recomendado). Rotas principais:
+
+- Agendamentos: `GET/POST http://localhost:5000/agendamentos`
+- Consultas: `GET http://localhost:5000/consultas`
+- Cirurgias: `GET http://localhost:5000/cirurgias`
+
+Exemplo: listar agendamentos (USER/ADMIN)
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:5000/agendamentos
+```
+
+Idempotência no Gateway (quando enviar `Idempotency-Key`):
+
+- Aplicada para métodos **exceto** `POST`, `PUT`, `PATCH` (ex.: `GET`, `DELETE`).
+- Exemplo (DELETE idempotente):
+
+```bash
+curl -X DELETE \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Idempotency-Key: 2d6a6d3c-10d7-4a0d-9b62-8e3f2b8a9a7b" \
+  http://localhost:5000/agendamentos/<ID>
+```
+
+### 📅 Agendamentos API (porta 5001)
+
+#### 1) Criar paciente (sem autenticação)
+
+```bash
+curl -X POST http://localhost:5001/api/Pacientes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "João da Silva",
+    "documento": "12345678901",
+    "dataNascimento": "1990-01-01T00:00:00",
+    "telefone": "11999999999",
+    "email": "joao@example.com"
+  }'
+```
+
+#### 2) Criar agendamento (USER/ADMIN)
+
+```bash
+curl -X POST http://localhost:5001/api/Agendamentos \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pacienteId": "<PACIENTE_ID>",
+    "dataHora": "2026-01-10T14:00:00Z",
+    "tipo": 0,
+    "descricao": "Consulta de rotina",
+    "emergencial": false
+  }'
+```
+
+#### 3) Listar agendamentos (USER/ADMIN)
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:5001/api/Agendamentos
+```
+
+Cache (Redis) está aplicado ao `GET /api/Agendamentos` com TTL curto e invalidação em operações de escrita.
+
+#### 4) Confirmar agendamento (ADMIN)
+
+Ao confirmar, a API publica evento no RabbitMQ para Clínica/Cirúrgico/Notificação.
+
+```bash
+curl -X PUT \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:5001/api/Agendamentos/<ID>/confirmar
+```
+
+#### 5) Cancelar agendamento (USER/ADMIN)
+
+```bash
+curl -X DELETE \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:5001/api/Agendamentos/<ID>
+```
+
+### 🩺 Clínica API (porta 5002)
+
+#### 1) Listar consultas (MEDICO/ADMIN)
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:5002/api/Consultas
+```
+
+#### 2) Criar consulta (ADMIN)
+
+```bash
+curl -X POST http://localhost:5002/api/Consultas \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agendamentoId": "<AGENDAMENTO_ID>",
+    "pacienteId": "<PACIENTE_ID>",
+    "dataHora": "2026-01-10T14:00:00Z",
+    "tipo": "Rotina"
+  }'
+```
+
+#### 3) Vincular sintomas à consulta (MEDICO/ADMIN)
+
+```bash
+curl -X POST http://localhost:5002/api/Consultas/<CONSULTA_ID>/sintomas \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "sintomaIds": ["<SINTOMA_ID>"] }'
+```
+
+#### 4) Doenças e sintomas (MEDICO/ADMIN para GET, ADMIN para POST)
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" http://localhost:5002/api/Doencas
+curl -H "Authorization: Bearer $TOKEN" http://localhost:5002/api/Sintomas
+```
+
+### 🏥 Cirúrgico API (porta 5003)
+
+#### 1) Listar cirurgias (MEDICO/ADMIN)
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:5003/api/Cirurgias
+```
+
+#### 2) Registrar cirurgia (ADMIN)
+
+```bash
+curl -X POST http://localhost:5003/api/Cirurgias \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agendamentoId": "<AGENDAMENTO_ID>",
+    "pacienteId": "<PACIENTE_ID>",
+    "dataHora": "2026-01-10T16:00:00Z"
+  }'
+```
+
+#### 3) Atualizar status (MEDICO/ADMIN)
+
+```bash
+curl -X PUT http://localhost:5003/api/Cirurgias/<ID>/status \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": 1
+  }'
+```
+
+### ✉️ Notificação API (porta 5004)
+
+Este serviço consome eventos do RabbitMQ e envia e-mail (assíncrono). Endpoint HTTP apenas para health check:
+
+```bash
+curl http://localhost:5004/
+```
+
 ## 🧱 Arquitetura Geral
 
 Gateway API
