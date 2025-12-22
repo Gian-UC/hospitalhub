@@ -18,8 +18,30 @@
 
 Projeto backend desenvolvido com .NET 8, arquitetura de microserviços, Gateway API, Keycloak para autenticação/autorização, RabbitMQ para comunicação assíncrona e envio de e-mails via serviço de notificação.
 
+## Índice
+
+- [Como utilizar](#como-utilizar)
+  - [Subir o ambiente](#subir-o-ambiente)
+  - [Autenticação (Keycloak) – token](#autenticacao-token)
+- [Passo a passo por API](#passo-a-passo-por-api)
+  - [Gateway API](#gateway-api)
+  - [Agendamentos API](#agendamentos-api)
+  - [Clínica API](#clinica-api)
+  - [Cirúrgico API](#cirurgico-api)
+  - [Notificação API](#notificacao-api)
+- [Arquitetura geral](#arquitetura-geral)
+- [Controle de acesso](#controle-de-acesso)
+- [Envio de e-mail](#envio-de-email)
+  - [MailHog](#mailhog)
+  - [Observabilidade](#observabilidade)
+  - [Idempotência](#idempotencia)
+  - [Gmail](#gmail)
+- [Tecnologias e versões](#tecnologias)
+
+<a id="como-utilizar"></a>
 ## 🚀 Como utilizar (passo a passo)
 
+<a id="subir-o-ambiente"></a>
 ### 1) Subir o ambiente
 
 Pelo diretório `docker/`:
@@ -42,6 +64,8 @@ Serviços e portas locais:
 
 ### 2) Autenticação (Keycloak) – obter token
 
+<a id="autenticacao-token"></a>
+
 As APIs protegem endpoints via JWT (Keycloak). Para chamar endpoints protegidos, obtenha um access token e envie no header:
 
 ```http
@@ -63,8 +87,10 @@ curl -s -X POST "http://localhost:8085/realms/hospital/protocol/openid-connect/t
 
 ---
 
+<a id="passo-a-passo-por-api"></a>
 ## ✅ Passo a passo por API
 
+<a id="gateway-api"></a>
 ### 🌐 Gateway API (porta 5000)
 
 Use o Gateway como ponto único de entrada (recomendado). Rotas principais:
@@ -92,6 +118,7 @@ curl -X DELETE \
   http://localhost:5000/agendamentos/<ID>
 ```
 
+<a id="agendamentos-api"></a>
 ### 📅 Agendamentos API (porta 5001)
 
 #### 1) Criar paciente (sem autenticação)
@@ -150,6 +177,7 @@ curl -X DELETE \
   http://localhost:5001/api/Agendamentos/<ID>
 ```
 
+<a id="clinica-api"></a>
 ### 🩺 Clínica API (porta 5002)
 
 #### 1) Listar consultas (MEDICO/ADMIN)
@@ -189,6 +217,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:5002/api/Doencas
 curl -H "Authorization: Bearer $TOKEN" http://localhost:5002/api/Sintomas
 ```
 
+<a id="cirurgico-api"></a>
 ### 🏥 Cirúrgico API (porta 5003)
 
 #### 1) Listar cirurgias (MEDICO/ADMIN)
@@ -222,6 +251,7 @@ curl -X PUT http://localhost:5003/api/Cirurgias/<ID>/status \
   }'
 ```
 
+<a id="notificacao-api"></a>
 ### ✉️ Notificação API (porta 5004)
 
 Este serviço consome eventos do RabbitMQ e envia e-mail (assíncrono). Endpoint HTTP apenas para health check:
@@ -230,6 +260,7 @@ Este serviço consome eventos do RabbitMQ e envia e-mail (assíncrono). Endpoint
 curl http://localhost:5004/
 ```
 
+<a id="arquitetura-geral"></a>
 ## 🧱 Arquitetura Geral
 
 Gateway API
@@ -255,6 +286,7 @@ Autenticação e autorização baseada em JWT e roles.
 
 
 
+<a id="controle-de-acesso"></a>
 ## 🔐 Controle de Acesso por API (Keycloak Roles)
 
 ### Gateway API
@@ -327,10 +359,12 @@ Maior resiliência
 
 Escalabilidade
 
+<a id="envio-de-email"></a>
 ## 📧 Envio de E-mail (Notificação)
 
 O envio de e-mails é realizado pelo microserviço Notificação API, de forma assíncrona, após a confirmação do agendamento.
 
+<a id="mailhog"></a>
 ## 🧪 Ambiente de Teste – MailHog (e-mail fake)
 
 Por padrão, o projeto utiliza o MailHog para testes locais.
@@ -351,6 +385,7 @@ http://localhost:8025
 
 O e-mail de confirmação aparecerá na interface do MailHog.
 
+<a id="observabilidade"></a>
 ## 🔭 Observabilidade (OpenTelemetry + Jaeger)
 
 O projeto exporta traces via OpenTelemetry (OTLP) e disponibiliza visualização no Jaeger.
@@ -358,6 +393,7 @@ O projeto exporta traces via OpenTelemetry (OTLP) e disponibiliza visualização
 - Jaeger UI: http://localhost:16686
 - Os serviços configuram `OTEL_SERVICE_NAME` e `OTEL_EXPORTER_OTLP_ENDPOINT` via `docker-compose`.
 
+<a id="idempotencia"></a>
 ## ♻️ Idempotência (Gateway)
 
 O Gateway aplica idempotência **apenas quando** o cliente envia o header `Idempotency-Key`.
@@ -366,6 +402,7 @@ O Gateway aplica idempotência **apenas quando** o cliente envia o header `Idemp
 - Respostas são armazenadas (Redis) e repetidas quando a mesma combinação (método + rota + query + usuário + key) for reutilizada.
 
 
+<a id="gmail"></a>
 ## 📬 Ambiente Real – Gmail (e-mail verdadeiro)
 
 Também é possível testar o envio de e-mails reais via SMTP Gmail.
@@ -411,6 +448,7 @@ O e-mail de confirmação será enviado para sua caixa de entrada 📱📧
 O envio de e-mail é assíncrono.
 Falhas no SMTP não impactam o fluxo principal de agendamentos.
 
+<a id="tecnologias"></a>
 ## 📦 Tecnologias e Versões Utilizadas
 ## 🔧 Runtime e SDK
 
