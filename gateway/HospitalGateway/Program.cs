@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using HospitalGateway.Middleware;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +27,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Fallback local (quando Redis não estiver configurado)
+builder.Services.AddDistributedMemoryCache();
+
+var redisConfiguration = builder.Configuration["Redis:Configuration"];
+if (!string.IsNullOrWhiteSpace(redisConfiguration))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConfiguration;
+        options.InstanceName = "gateway:";
+    });
+}
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService(serviceName: builder.Configuration["OTEL_SERVICE_NAME"] ?? "HospitalGateway"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    });
+
 builder.Services.AddOcelot(builder.Configuration);
 
 builder.Services.AddControllers();
@@ -36,10 +62,12 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-await app.UseOcelot();
+app.UseMiddleware<IdempotencyMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+await app.UseOcelot();
 
 app.MapControllers();
 

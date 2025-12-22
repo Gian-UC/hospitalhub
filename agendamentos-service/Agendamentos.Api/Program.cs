@@ -9,6 +9,8 @@ using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +88,26 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("UserOnly", policy => policy.RequireRole("USER"));
 });
+
+var redisConfiguration = builder.Configuration["Redis:Configuration"];
+if (!string.IsNullOrWhiteSpace(redisConfiguration))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConfiguration;
+        options.InstanceName = "agendamentos:";
+    });
+}
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService(serviceName: builder.Configuration["OTEL_SERVICE_NAME"] ?? "Agendamentos.Api"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter();
+    });
 
 builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
 builder.Services.AddSingleton<IAgendamentoConfirmadoProducer, AgendamentoConfirmadoProducer>();

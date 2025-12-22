@@ -1,6 +1,25 @@
 version: "3.9"
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: jaeger
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -40,10 +59,15 @@ services:
     environment:
       - Keycloak__Authority=http://keycloak:8080/realms/hospital
       - Keycloak__Audience=hospital-api
+      - Redis__Configuration=redis:6379
+      - OTEL_SERVICE_NAME=Agendamentos.Api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       mysql-agendamentos:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     ports:
       - "5001:8080"
@@ -80,6 +104,8 @@ services:
       - RabbitMQ__HostName=rabbitmq
       - Keycloak__Authority=http://keycloak:8080/realms/hospital
       - Keycloak__Audience=hospital-api
+      - OTEL_SERVICE_NAME=Clinica.Api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       mysql-clinica:
         condition: service_healthy
@@ -116,6 +142,8 @@ services:
       - RabbitMQ__HostName=rabbitmq
       - Keycloak__Authority=http://keycloak:8080/realms/hospital
       - Keycloak__Audience=hospital-api
+      - OTEL_SERVICE_NAME=Cirurgico.Api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       mysql-cirurgico:
         condition: service_healthy
@@ -148,8 +176,14 @@ services:
       - clinica-api    
       - cirurgico-api
       - keycloak
+      - redis
+      - jaeger
     ports:
       - "5000:8080"
+    environment:
+      - Redis__Configuration=redis:6379
+      - OTEL_SERVICE_NAME=HospitalGateway
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
 
   mailhog:
     image: mailhog/mailhog
@@ -179,6 +213,8 @@ services:
       # Para Gmail/Outlook, configure via .env (App Password recomendado)
       - Smtp__User=SEU_EMAIL@gmail.com
       - Smtp__Pass=SENHA_DE_APP_GMAIL
+      - OTEL_SERVICE_NAME=Notificacao.Api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     ports:
       - "5004:8080"
 

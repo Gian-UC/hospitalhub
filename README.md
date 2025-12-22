@@ -3,10 +3,15 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/.NET-8.0.6-blueviolet"/>
-  <img src="https://img.shields.io/badge/Docker-Enabled-blue"/>
-  <img src="https://img.shields.io/badge/RabbitMQ-Async-orange"/>
-  <img src="https://img.shields.io/badge/Keycloak-Security-green"/>
+  <img src="https://img.shields.io/badge/.NET-8-blueviolet?logo=dotnet&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Docker-Enabled-blue?logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white"/>
+  <img src="https://img.shields.io/badge/RabbitMQ-Async-FF6600?logo=rabbitmq&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Keycloak-Security-4D4D4D?logo=keycloak&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Ocelot-Gateway-6E57E0"/>
+  <img src="https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white"/>
+  <img src="https://img.shields.io/badge/OpenTelemetry-Tracing-000000?logo=opentelemetry&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Jaeger-UI-66CFE3"/>
 </p>
 
 # 🏥 HospitalHub – Arquitetura de Microserviços
@@ -134,6 +139,20 @@ http://localhost:8025
 
 O e-mail de confirmação aparecerá na interface do MailHog.
 
+## 🔭 Observabilidade (OpenTelemetry + Jaeger)
+
+O projeto exporta traces via OpenTelemetry (OTLP) e disponibiliza visualização no Jaeger.
+
+- Jaeger UI: http://localhost:16686
+- Os serviços configuram `OTEL_SERVICE_NAME` e `OTEL_EXPORTER_OTLP_ENDPOINT` via `docker-compose`.
+
+## ♻️ Idempotência (Gateway)
+
+O Gateway aplica idempotência **apenas quando** o cliente envia o header `Idempotency-Key`.
+
+- Aplicado para métodos **exceto** `POST`, `PUT`, `PATCH` (ex.: `GET`, `DELETE`).
+- Respostas são armazenadas (Redis) e repetidas quando a mesma combinação (método + rota + query + usuário + key) for reutilizada.
+
 
 ## 📬 Ambiente Real – Gmail (e-mail verdadeiro)
 
@@ -222,8 +241,10 @@ Falhas no SMTP não impactam o fluxo principal de agendamentos.
 | Docker Compose | 3.9 |
 | RabbitMQ | 3-management |
 | MySQL | 8.0 |
+| Redis | 7-alpine |
 | Keycloak | 24.0.4 |
 | MailHog | Latest |
+| Jaeger | 1.57 |
 
 ## 🖥️ Frontend (Opcional / Futuro)
 

@@ -5,6 +5,8 @@ using Agendamentos.Api.Messaging.Events;
 using Agendamentos.Api.Messaging.Producer;
 using Agendamentos.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace Agendamentos.Api.Services.Implementations
 {
@@ -12,13 +14,19 @@ namespace Agendamentos.Api.Services.Implementations
     {
         private readonly HospitalAgendamentosContext _context;
         private readonly IAgendamentoConfirmadoProducer _producer;
+        private readonly IDistributedCache? _cache;
+
+        private const string ListarCacheKey = "agendamentos:list:v1";
+        private static readonly JsonSerializerOptions CacheJsonOptions = new(JsonSerializerDefaults.Web);
 
         public AgendamentoService(
             HospitalAgendamentosContext context,
-            IAgendamentoConfirmadoProducer producer)
+            IAgendamentoConfirmadoProducer producer,
+            IDistributedCache? cache = null)
         {
             _context = context;
             _producer = producer;
+            _cache = cache;
         }
 
         public async Task<AgendamentoResponseDto> CriarAsync(AgendamentoCreateDto dto)
@@ -48,11 +56,25 @@ namespace Agendamentos.Api.Services.Implementations
             _context.Agendamentos.Add(ag);
             await _context.SaveChangesAsync();
 
+            if (_cache != null)
+                await _cache.RemoveAsync(ListarCacheKey);
+
             return await MapToResponseDto(ag);
         }
 
         public async Task<IEnumerable<AgendamentoResponseDto>> ListarAsync()
         {
+            if (_cache != null)
+            {
+                var cached = await _cache.GetStringAsync(ListarCacheKey);
+                if (!string.IsNullOrWhiteSpace(cached))
+                {
+                    var fromCache = JsonSerializer.Deserialize<List<AgendamentoResponseDto>>(cached, CacheJsonOptions);
+                    if (fromCache != null)
+                        return fromCache;
+                }
+            }
+
             var lista = await _context.Agendamentos
                 .Include(a => a.Paciente)
                 .ToListAsync();
@@ -61,6 +83,18 @@ namespace Agendamentos.Api.Services.Implementations
 
             foreach (var ag in lista)
                 retorno.Add(await MapToResponseDto(ag));
+
+            if (_cache != null)
+            {
+                var payload = JsonSerializer.Serialize(retorno, CacheJsonOptions);
+                await _cache.SetStringAsync(
+                    ListarCacheKey,
+                    payload,
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
+                    });
+            }
 
             return retorno;
         }
@@ -88,6 +122,9 @@ namespace Agendamentos.Api.Services.Implementations
             ag.Confirmado = true;
             await _context.SaveChangesAsync();
 
+            if (_cache != null)
+                await _cache.RemoveAsync(ListarCacheKey);
+
             var evt = new AgendamentoConfirmadoEvent
             {
                 AgendamentoId = ag.Id,
@@ -110,6 +147,9 @@ namespace Agendamentos.Api.Services.Implementations
 
             _context.Agendamentos.Remove(ag);
             await _context.SaveChangesAsync();
+
+            if (_cache != null)
+                await _cache.RemoveAsync(ListarCacheKey);
 
             return true;
         }
